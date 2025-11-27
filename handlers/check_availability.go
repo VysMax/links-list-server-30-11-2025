@@ -9,9 +9,8 @@ const (
 	notAvailable = "not available"
 )
 
-func checkAvailability(links []string) (map[string]string, int, error) {
+func checkAvailability(links []string) (map[string]string, error) {
 	checkedLinks := make(map[string]string)
-	counter := 0
 
 	for _, link := range links {
 		client := &http.Client{}
@@ -25,16 +24,15 @@ func checkAvailability(links []string) (map[string]string, int, error) {
 			}
 
 		}
-
 		defer resp.Body.Close()
+
 		if resp.StatusCode >= 200 && resp.StatusCode <= 300 {
 			checkedLinks[link] = available
-			counter++
 		} else {
 			checkedLinks[link] = notAvailable
 		}
 
 	}
 
-	return checkedLinks, counter, nil
+	return checkedLinks, nil
 }
