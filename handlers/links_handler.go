@@ -1,15 +1,13 @@
-package handlers
+package controller
 
 import (
 	"encoding/json"
 	"net/http"
-	"os"
-	"strconv"
 
 	"github.com/VysMax/links-list-server/entities"
 )
 
-func LinksHandler(w http.ResponseWriter, r *http.Request) {
+func (h *LinksHandler) SaveLinks(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -26,7 +24,7 @@ func LinksHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 	}
 
-	var linksSet entities.LinksResponse
+	var linksSet entities.LinksToSave
 
 	checkedLinks, err := checkAvailability(req.Links)
 	if err != nil {
@@ -34,17 +32,16 @@ func LinksHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	linksSet.Links = checkedLinks
-	entities.LastNum++
-	linksSet.LinksNum = entities.LastNum
+	linksSet.LinksNum = entities.LastNum + 1
+
+	err = h.service.SaveLinks(linksSet)
+	if err != nil {
+		http.Error(w, "failed to save links", http.StatusInternalServerError)
+	}
 
 	resp, err := json.Marshal(linksSet)
 	if err != nil {
 		http.Error(w, "failed to marshal response", http.StatusInternalServerError)
-	}
-
-	err = os.WriteFile("./saved_links/set_"+strconv.Itoa(entities.LastNum)+".json", resp, 0644)
-	if err != nil {
-		http.Error(w, "failed to create file with saved links set", http.StatusInternalServerError)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
